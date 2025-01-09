@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perpustakaan Online</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+    }
+    .tab {
+      margin-right: 10px;
+      padding: 10px;
+      cursor: pointer;
+      background-color: #f4f4f4;
+      border: 1px solid #ddd;
+    }
+    .tab.active {
+      background-color: #ddd;
+      font-weight: bold;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Perpustakaan Online</h1>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="master-buku">Master Buku</div>
+    <div class="tab" data-tab="peminjaman">Peminjaman</div>
+  </div>
+
+  <!-- Tab Master Buku -->
+  <div id="master-buku" class="tab-content active">
+    <h2>Master Buku</h2>
+    <form id="book-form">
+      <input type="text" id="title" placeholder="Judul Buku" required>
+      <input type="text" id="author" placeholder="Pengarang" required>
+      <input type="number" id="year" placeholder="Tahun Terbit" required>
+      <button type="submit">Tambah Buku</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Judul Buku</th>
+          <th>Pengarang</th>
+          <th>Tahun</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="book-list">
+        <!-- Buku akan ditampilkan di sini -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Tab Peminjaman -->
+  <div id="peminjaman" class="tab-content">
+    <h2>Peminjaman Buku</h2>
+    <form id="borrow-form">
+      <select id="borrow-book" required>
+        <option value="">Pilih Buku</option>
+      </select>
+      <input type="text" id="borrower" placeholder="Nama Peminjam" required>
+      <button type="submit">Pinjam Buku</button>
+    </form>
+    <table>
+      <thead>
+        <tr>
+          <th>No</th>
+          <th>Judul Buku</th>
+          <th>Nama Peminjam</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="borrow-list">
+        <!-- Peminjaman akan ditampilkan di sini -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let books = []; // Data buku
+    let borrowings = []; // Data peminjaman
+
+    // Fungsi untuk mengelola tabs
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Aktifkan tab yang dipilih
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Tampilkan konten tab yang sesuai
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Fungsi Render Buku ke Tabel dan Dropdown
+    function renderBooks() {
+      const bookList = document.getElementById('book-list');
+      const borrowBook = document.getElementById('borrow-book');
+      bookList.innerHTML = ''; // Hapus isi tabel sebelumnya
+      borrowBook.innerHTML = '<option value="">Pilih Buku</option>'; // Reset dropdown
+
+      books.forEach((book, index) => {
+        const row = `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${book.title}</td>
+            <td>${book.author}</td>
+            <td>${book.year}</td>
+            <td>
+              <button onclick="editBook(${index})">Edit</button>
+              <button onclick="deleteBook(${index})">Hapus</button>
+            </td>
+          </tr>
+        `;
+        bookList.innerHTML += row;
+
+        // Tambahkan ke dropdown peminjaman
+        borrowBook.innerHTML += `<option value="${index}">${book.title}</option>`;
+      });
+    }
+
+    // Fungsi Tambah Buku
+    document.getElementById('book-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const title = document.getElementById('title').value;
+      const author = document.getElementById('author').value;
+      const year = document.getElementById('year').value;
+
+      books.push({ title, author, year });
+      document.getElementById('title').value = '';
+      document.getElementById('author').value = '';
+      document.getElementById('year').value = '';
+      renderBooks();
+    });
+
+    // Fungsi Edit Buku
+    function editBook(index) {
+      const book = books[index];
+      const newTitle = prompt('Edit Judul Buku:', book.title);
+      const newAuthor = prompt('Edit Pengarang:', book.author);
+      const newYear = prompt('Edit Tahun Terbit:', book.year);
+
+      if (newTitle && newAuthor && newYear) {
+        books[index] = { title: newTitle, author: newAuthor, year: newYear };
+        renderBooks();
+      }
+    }
+
+    // Fungsi Hapus Buku
+    function deleteBook(index) {
+      books.splice(index, 1);
+      renderBooks();
+    }
+
+    // Fungsi Tambah Peminjaman
+    document.getElementById('borrow-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const bookIndex = document.getElementById('borrow-book').value;
+      const borrower = document.getElementById('borrower').value;
+
+      if (bookIndex !== '') {
+        borrowings.push({
+          book: books[bookIndex].judul,
+          borrower: borrower
+        });
+        document.getElementById('borrow-book').value = '';
+        document.getElementById('borrower').value = '';
+        renderBorrowings();
+      }
+    });
+
+    // Fungsi Render Peminjaman ke Tabel
+    function renderBorrowings() {
+      const borrowList = document.getElementById('borrow-list');
+      borrowList.innerHTML = ''; // Hapus isi tabel sebelumnya
+
+      borrowings.forEach((borrowing, index) => {
+        const row = `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${borrowing.book}</td>
+            <td>${borrowing.borrower}</td>
+            <td><button onclick="returnBook(${index})">Kembalikan</button></td>
+          </tr>
+        `;
+        borrowList.innerHTML += row;
+      });
+    }
+
+    // Fungsi Kembalikan Buku
+    function returnBook(index) {
+      borrowings.splice(index, 1);
+      renderBorrowings();
+    }
+  </script>
+</body>
+</html>
